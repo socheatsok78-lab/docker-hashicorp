@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/local/bin/go-discover-dockerswarm addrs "provider=dockerswarm type=node role=${1:-${DOCKERSWARM_NODE_ROLE:-manager}}"

@@ -139,4 +139,7 @@ target "vault-dev" {
 
 target "go-discover-dockerswarm" {
   context = "go-discover-dockerswarm"
+  tags = [
+    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/go-discover-dockerswarm:cacheonly"
+  ]
 }

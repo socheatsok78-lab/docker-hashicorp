@@ -1,4 +1,6 @@
+target ?= default
+
 it:
-	docker buildx bake --set=*.platform="" --print
+	docker buildx bake $(target) --set=*.platform="" --print
 build:
-	docker buildx bake --set=*.platform="" --load
+	docker buildx bake $(target) --set=*.platform="" --load

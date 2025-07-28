@@ -15,7 +15,12 @@ RUN apk add --no-cache git patch make
 RUN npm install -g corepack && corepack disable && corepack enable
 COPY --from=stage0 /vault /vault
 WORKDIR /vault
-RUN --mount=type=cache,target=/vault/ui/node_modules make ember-dist
+RUN --mount=type=cache,target=/root/.yarn/ \
+    --mount=type=cache,target=/root/.cache/yarn \
+    --mount=type=cache,target=/usr/local/share/.cache/yarn \
+<<EOF
+    make ember-dist
+EOF
 
 # Stage 2: Build the Vault binary
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS stage2

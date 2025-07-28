@@ -66,4 +66,3 @@ EOF
 FROM hashicorp/vault:${VAULT_VERSION}
 ARG TARGETARCH
 COPY --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault
-COPY --from=go-discover-dockerswarm / /

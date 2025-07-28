@@ -76,4 +76,3 @@ RUN go build -o /bin/discover-dockerswarm . \
 FROM hashicorp/consul:${CONSUL_VERSION}
 ARG TARGETARCH
 COPY --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul
-COPY --from=go-discover-dockerswarm / /

@@ -42,9 +42,6 @@ target "consul" {
     "github-metadata-action",
   ]
   context = "consul/v${version}"
-  contexts = {
-    "go-discover-dockerswarm" = "target:go-discover-dockerswarm"
-  }
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -60,9 +57,6 @@ target "consul-dev" {
   }
   name = "consul_${replace(version, ".", "_")}_dev"
   context = "consul/v${version}"
-  contexts = {
-    "go-discover-dockerswarm" = "target:go-discover-dockerswarm"
-  }
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul:${version}-dev"
   ]
@@ -107,9 +101,6 @@ target "vault" {
     "github-metadata-action",
   ]
   context = "vault/v${version}"
-  contexts = {
-    "go-discover-dockerswarm" = "target:go-discover-dockerswarm"
-  }
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -125,21 +116,7 @@ target "vault-dev" {
   }
   name = "vault_${replace(version, ".", "_")}_dev"
   context = "vault/v${version}"
-  contexts = {
-    "go-discover-dockerswarm" = "target:go-discover-dockerswarm"
-  }
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/vault:${version}-dev"
-  ]
-}
-
-# --------------------------------------------------
-# .
-# --------------------------------------------------
-
-target "go-discover-dockerswarm" {
-  context = "go-discover-dockerswarm"
-  tags = [
-    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/go-discover-dockerswarm:cacheonly"
   ]
 }

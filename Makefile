@@ -1,4 +1,4 @@
 it:
-	docker buildx bake --print --set=*.platform=""
+	docker buildx bake --set=*.platform="" --print
 build:
-	docker --context=default buildx bake --load --set=*.platform=""
+	docker buildx bake --set=*.platform="" --load

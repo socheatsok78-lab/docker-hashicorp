@@ -28,7 +28,6 @@ group "dev" {
 variable "CONSUL_VERSIONS" {
   type = list(string)
   default = [
-    "latest",
     "1.21.3",
   ]
 }
@@ -72,7 +71,6 @@ target "consul-node-init" {
 variable "VAULT_VERSIONS" {
   type = list(string)
   default = [
-    "latest",
     "1.20.0",
     "1.20.1",
   ]

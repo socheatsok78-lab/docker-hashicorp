@@ -41,7 +41,7 @@ target "consul" {
     "docker-metadata-action",
     "github-metadata-action",
   ]
-  context = "consul/v${version}"
+  context = "consul/${version}"
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -56,7 +56,7 @@ target "consul-dev" {
     version = CONSUL_VERSIONS
   }
   name = "consul_${replace(version, ".", "_")}_dev"
-  context = "consul/v${version}"
+  context = "consul/${version}"
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul:${version}-dev"
   ]
@@ -101,7 +101,7 @@ target "vault" {
     "docker-metadata-action",
     "github-metadata-action",
   ]
-  context = "vault/v${version}"
+  context = "vault/${version}"
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -116,7 +116,7 @@ target "vault-dev" {
     version = VAULT_VERSIONS
   }
   name = "vault_${replace(version, ".", "_")}_dev"
-  context = "vault/v${version}"
+  context = "vault/${version}"
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/vault:${version}-dev"
   ]

@@ -15,6 +15,7 @@ RUN apk add --no-cache git patch make
 RUN npm install -g corepack && corepack disable && corepack enable
 COPY --from=stage0 /vault /vault
 WORKDIR /vault
+ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 RUN --mount=type=cache,target=/root/.yarn/ \
     --mount=type=cache,target=/root/.cache/yarn \
     --mount=type=cache,target=/usr/local/share/.cache/yarn \

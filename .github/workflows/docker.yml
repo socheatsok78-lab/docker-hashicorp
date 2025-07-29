@@ -6,6 +6,9 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - 'docker-bake.hcl'
+      - '**/**/Dockerfile'
   pull_request:
     types: [opened, synchronize, reopened]
 

@@ -8,16 +8,7 @@ target "github-metadata-action" {}
 group "default" {
   targets = [
     "consul",
-    "consul-node-init",
     "vault",
-  ]
-}
-
-group "dev" {
-  targets = [
-    "consul-dev",
-    "vault-dev",
-    "consul-node-init-dev",
   ]
 }
 
@@ -49,19 +40,6 @@ target "consul" {
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul:${version}"
   ]
-}
-
-target "consul-node-init" {
-  inherits = [
-    "docker-metadata-action",
-    "github-metadata-action",
-  ]
-  context = "consul-node-init"
-  platforms = [
-    "linux/amd64",
-    "linux/arm64",
-  ]
-  tags = [ "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul-node-init:latest" ]
 }
 
 # --------------------------------------------------

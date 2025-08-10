@@ -51,6 +51,7 @@ variable "VAULT_VERSIONS" {
   default = [
     "1.20.0",
     "1.20.1",
+    "1.20.2",
   ]
 }
 

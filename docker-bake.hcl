@@ -9,6 +9,7 @@ group "default" {
   targets = [
     "consul",
     "vault",
+    "openbao",
   ]
 }
 
@@ -81,5 +82,39 @@ target "vault" {
   }
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/vault:${version}"
+  ]
+}
+
+# --------------------------------------------------
+# Openbao
+# --------------------------------------------------
+
+variable "OPENBAO_VERSIONS" {
+  type = list(string)
+  default = [
+    "2.4.0",
+    "2.4.1",
+  ]
+}
+
+target "openbao" {
+  matrix = {
+    version = OPENBAO_VERSIONS
+  }
+  name = "openbao_${sanitize(version)}"
+  inherits = [
+    "docker-metadata-action",
+    "github-metadata-action",
+  ]
+  context = "openbao/${version}"
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+  ]
+  labels = {
+    "org.opencontainers.image.description" = "A tool for secrets management, encryption as a service, and privileged access management"
+  }
+  tags = [
+    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/openbao:${version}"
   ]
 }

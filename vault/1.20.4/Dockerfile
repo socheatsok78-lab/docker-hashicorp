@@ -34,6 +34,7 @@ WORKDIR /vault
 
 # Replace the go-discover dependency with the socheatsok78-lab version
 RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
+RUN echo "replace github.com/hashicorp/go-cmp => github.com/google/go-cmp v0.7.0" >> go.mod
 
 # Build the Vault binary
 ARG TARGETARCH

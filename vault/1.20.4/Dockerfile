@@ -15,13 +15,7 @@ RUN apk add --no-cache git patch make
 RUN npm install -g corepack && corepack disable && corepack enable
 COPY --from=stage0 /vault /vault
 WORKDIR /vault
-ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
-RUN --mount=type=cache,target=/root/.yarn/ \
-    --mount=type=cache,target=/root/.cache/yarn \
-    --mount=type=cache,target=/usr/local/share/.cache/yarn \
-<<EOF
-    make ember-dist
-EOF
+RUN make ember-dist
 
 # Stage 2: Build the Vault binary
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS stage2
@@ -39,9 +33,7 @@ RUN echo "replace github.com/hashicorp/go-cmp => github.com/google/go-cmp v0.7.0
 # Build the Vault binary
 ARG TARGETARCH
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-<<EOF
+RUN <<EOF
     go mod tidy
     # (cd api && go mod tidy)
     # (cd sdk && go mod tidy)

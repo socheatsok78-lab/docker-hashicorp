@@ -16,11 +16,11 @@ RUN npm install -g corepack && corepack disable && corepack enable
 COPY --link --from=stage0 /vault /vault
 WORKDIR /vault
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
-RUN --mount=type=cache,target=/root/.yarn/ \
-    --mount=type=cache,target=/root/.cache/yarn \
-    --mount=type=cache,target=/usr/local/share/.cache/yarn \
-<<EOF
+RUN <<EOF
     make ember-dist
+
+    # cleanup
+    rm -rf /root/.yarn /root/.cache/yarn /usr/local/share/.cache/yarn
 EOF
 
 # Stage 2: Build the Vault binary
@@ -32,16 +32,14 @@ COPY --link --from=stage0 /vault /vault
 COPY --link --from=stage1 /vault/http/web_ui/ /vault/http/web_ui/
 WORKDIR /vault
 
-# Replace the go-discover dependency with the socheatsok78-lab version
-RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
+# Replace dependencies with alternative forks or versions
 RUN echo "replace github.com/hashicorp/go-cmp => github.com/google/go-cmp v0.7.0" >> go.mod
+RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
 
 # Build the Vault binary
 ARG TARGETARCH
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-<<EOF
+RUN <<EOF
     go mod tidy
     # (cd api && go mod tidy)
     # (cd sdk && go mod tidy)
@@ -62,6 +60,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
     done
+
+    # cleanup
+    rm -rf /go/pkg/mod /root/.cache/go-build
 EOF
 
 # Final stage

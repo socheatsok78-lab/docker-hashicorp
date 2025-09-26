@@ -3,6 +3,7 @@ ARG GO_VERSION=1.24.3
 ARG NODE_VERSION=20
 
 ARG ALPINE_VERSION=3
+ARG DOCKER_CACHE_KEY=vault
 ARG DOCKER_CACHE_PURGE=1
 
 # Stage 0: Clone the Vault repository
@@ -21,10 +22,11 @@ COPY --link --from=stage0 /vault /vault
 WORKDIR /vault
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 ARG VAULT_VERSION
+ARG DOCKER_CACHE_KEY
 ARG DOCKER_CACHE_PURGE
-RUN --mount=type=cache,sharing=locked,id=vault/${VAULT_VERSION}/root/.yarn,target=/root/.yarn \
-    --mount=type=cache,sharing=locked,id=vault/${VAULT_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
-    --mount=type=cache,sharing=locked,id=vault/${VAULT_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
+RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.yarn,target=/root/.yarn \
+    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
+    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
 <<EOF
     apk add --no-cache --virtual .build-deps curl git patch make
     (set -x; make ember-dist)
@@ -51,9 +53,10 @@ RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-la
 # Build the Vault binary
 ARG TARGETARCH
 ARG VAULT_VERSION
+ARG DOCKER_CACHE_KEY
 ARG DOCKER_CACHE_PURGE
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,sharing=locked,id=openbao/${VAULT_VERSION}/go/pkg/mod,target=/go/pkg/mod \
+RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF
     apk add --no-cache --virtual .build-deps curl bash git patch

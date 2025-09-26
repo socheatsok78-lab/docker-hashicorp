@@ -13,7 +13,7 @@ RUN git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://githu
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS stage1
 RUN apk add --no-cache git patch make
 RUN npm install -g corepack && corepack disable && corepack enable
-COPY --from=stage0 /vault /vault
+COPY --link --from=stage0 /vault /vault
 WORKDIR /vault
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 RUN --mount=type=cache,target=/root/.yarn/ \

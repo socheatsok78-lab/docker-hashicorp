@@ -14,7 +14,7 @@ WORKDIR /consul
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS stage1
 RUN apk add --no-cache bash git patch make go
 RUN npm install -g corepack && corepack disable && corepack enable
-COPY --from=stage0 /consul /consul
+COPY --link --from=stage0 /consul /consul
 WORKDIR /consul
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 RUN --mount=type=cache,target=/root/.yarn/ \

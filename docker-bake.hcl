@@ -27,6 +27,10 @@ variable "CONSUL_VERSIONS" {
 }
 target "consul-base" {
   context = "consul/base"
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+  ]
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul:base-cacheonly"
   ]
@@ -72,6 +76,10 @@ variable "VAULT_VERSIONS" {
 }
 target "vault-base" {
   context = "vault/base"
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+  ]
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/vault:base-cacheonly"
   ]
@@ -114,6 +122,10 @@ variable "OPENBAO_VERSIONS" {
 }
 target "openbao-base" {
   context = "openbao/base"
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+  ]
   tags = [
     "ghcr.io/${GITHUB_REPOSITORY_OWNER}/openbao:base-cacheonly"
   ]

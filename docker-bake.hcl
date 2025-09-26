@@ -106,7 +106,9 @@ variable "OPENBAO_VERSIONS" {
     "2.4.1",
   ]
 }
-
+target "openbao-base" {
+  context = "openbao/base"
+}
 target "openbao" {
   matrix = {
     version = OPENBAO_VERSIONS
@@ -117,6 +119,9 @@ target "openbao" {
     "github-metadata-action",
   ]
   context = "openbao/${version}"
+  contexts = {
+    "openbao" = "target:openbao-base"
+  }
   platforms = [
     "linux/amd64",
     "linux/arm64",

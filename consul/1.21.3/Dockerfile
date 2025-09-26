@@ -5,10 +5,12 @@ ARG NODE_VERSION=18
 # Stage 0: Clone the consul repository
 ARG ALPINE_VERSION=3.13
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
-RUN apk add --no-cache git
 ARG CONSUL_VERSION
-RUN git clone --depth=1 --branch=v${CONSUL_VERSION} --single-branch https://github.com/hashicorp/consul.git /consul
-WORKDIR /consul
+RUN <<EOT
+    apk add --no-cache --virtual .build-deps curl git
+    git clone --depth=1 --branch=v${CONSUL_VERSION} --single-branch https://github.com/hashicorp/consul.git /consul
+    apk del .build-deps
+EOT
 
 # Stage 1: Build the UI
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS stage1
@@ -17,16 +19,21 @@ RUN npm install -g corepack && corepack disable && corepack enable
 COPY --link --from=stage0 /consul /consul
 WORKDIR /consul
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
-RUN --mount=type=cache,target=/root/.yarn/ \
+RUN --mount=type=cache,target=/root/.yarn \
     --mount=type=cache,target=/root/.cache/yarn \
     --mount=type=cache,target=/usr/local/share/.cache/yarn \
 <<EOF
-    make ui-regen
+    apk add --no-cache --virtual .build-deps curl git patch make
+    (set -x; make ui-regen)
+
+    # cleanup
+    rm -rf /vault/ui/node_modules
+    rm -rf /root/.yarn/* /root/.cache/yarn/* /usr/local/share/.cache/yarn/*
+    apk del .build-deps
 EOF
 
 # Stage 2: Build the consul binary
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS stage2
-RUN apk add --no-cache bash git patch
 
 # Copy the consul source code from the previous stage
 COPY --link --from=stage0 /consul /consul
@@ -40,8 +47,10 @@ RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-la
 ARG TARGETARCH
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF
+    apk add --no-cache --virtual .build-deps curl bash git patch
+
     go mod tidy
     # (cd api && go mod tidy)
     # (cd sdk && go mod tidy)
@@ -61,7 +70,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     for GOARCH in amd64 arm64; do
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
+        rm -rf /root/.cache/go-build/*
     done
+
+    # cleanup
+    apk del .build-deps
+    rm -rf /go/pkg/mod/*
 EOF
 
 # Final stage

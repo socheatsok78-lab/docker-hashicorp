@@ -27,6 +27,9 @@ variable "CONSUL_VERSIONS" {
 }
 target "consul-base" {
   context = "consul/base"
+  tags = [
+    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/consul:base-cacheonly"
+  ]
 }
 target "consul" {
   matrix = {
@@ -69,6 +72,9 @@ variable "VAULT_VERSIONS" {
 }
 target "vault-base" {
   context = "vault/base"
+  tags = [
+    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/vault:base-cacheonly"
+  ]
 }
 target "vault" {
   matrix = {
@@ -108,6 +114,9 @@ variable "OPENBAO_VERSIONS" {
 }
 target "openbao-base" {
   context = "openbao/base"
+  tags = [
+    "ghcr.io/${GITHUB_REPOSITORY_OWNER}/openbao:base-cacheonly"
+  ]
 }
 target "openbao" {
   matrix = {

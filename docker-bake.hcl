@@ -92,7 +92,7 @@ target "vault" {
 variable "OPENBAO_VERSIONS" {
   type = list(string)
   default = [
-    "2.4.0",
+    // "2.4.0",
     "2.4.1",
   ]
 }

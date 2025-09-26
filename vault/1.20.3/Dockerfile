@@ -75,14 +75,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     for GOARCH in amd64 arm64; do
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
-        if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
-            rm -rf /root/.cache/go-build/*
-        fi
     done
 
     # cleanup, if requested
     if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
         rm -rf /go/pkg/mod/*
+        rm -rf /root/.cache/go-build/*
     fi
     apk del .build-deps
 EOF

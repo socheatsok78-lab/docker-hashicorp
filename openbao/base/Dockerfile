@@ -35,9 +35,6 @@ EXPOSE 8200
 ADD --chmod=0755 https://raw.githubusercontent.com/openbao/openbao/refs/heads/main/.release/docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Use the OpenBao user as the default user for starting this container.
-USER openbao
-
 # # By default you'll get a single-node development server that stores everything
 # # in RAM and bootstraps itself. Don't use this configuration for production.
 CMD ["server", "-dev", "-dev-no-store-token"]

@@ -92,4 +92,6 @@ EOF
 # Final stage
 FROM openbao
 ARG TARGETARCH
-COPY --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/openbao /bin/vault
+COPY --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/openbao /bin/bao
+RUN ln -s /bin/bao /bin/vault
+USER openbao

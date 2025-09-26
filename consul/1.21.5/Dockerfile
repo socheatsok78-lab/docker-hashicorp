@@ -2,8 +2,10 @@ ARG CONSUL_VERSION=1.21.5
 ARG GO_VERSION=1.25.0
 ARG NODE_VERSION=20
 
-# Stage 0: Clone the consul repository
 ARG ALPINE_VERSION=3.13
+ARG DOCKER_CACHE_PURGE=1
+
+# Stage 0: Clone the consul repository
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
 ARG CONSUL_VERSION
 RUN <<EOT
@@ -19,6 +21,7 @@ RUN npm install -g corepack && corepack disable && corepack enable
 COPY --link --from=stage0 /consul /consul
 WORKDIR /consul
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
+ARG DOCKER_CACHE_PURGE
 RUN --mount=type=cache,target=/root/.yarn \
     --mount=type=cache,target=/root/.cache/yarn \
     --mount=type=cache,target=/usr/local/share/.cache/yarn \
@@ -26,9 +29,11 @@ RUN --mount=type=cache,target=/root/.yarn \
     apk add --no-cache --virtual .build-deps curl git patch make
     (set -x; make ui-regen)
 
-    # cleanup
-    rm -rf /vault/ui/node_modules
-    rm -rf /root/.yarn/* /root/.cache/yarn/* /usr/local/share/.cache/yarn/*
+    # cleanup, if requested
+    if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
+        rm -rf /vault/ui/node_modules
+        rm -rf /root/.yarn/* /root/.cache/yarn/* /usr/local/share/.cache/yarn/*
+    fi
     apk del .build-deps
 EOF
 
@@ -45,6 +50,7 @@ RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-la
 
 # Build the consul binary
 ARG TARGETARCH
+ARG DOCKER_CACHE_PURGE
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
@@ -70,12 +76,16 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     for GOARCH in amd64 arm64; do
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
-        rm -rf /root/.cache/go-build/*
+        if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
+            rm -rf /root/.cache/go-build/*
+        fi
     done
 
-    # cleanup
+    # cleanup, if requested
+    if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
+        rm -rf /go/pkg/mod/*
+    fi
     apk del .build-deps
-    rm -rf /go/pkg/mod/*
 EOF
 
 # Final stage

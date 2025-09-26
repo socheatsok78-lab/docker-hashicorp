@@ -21,10 +21,11 @@ RUN npm install -g corepack && corepack disable && corepack enable
 COPY --link --from=stage0 /consul /consul
 WORKDIR /consul
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
+ARG CONSUL_VERSION
 ARG DOCKER_CACHE_PURGE
-RUN --mount=type=cache,target=/root/.yarn \
-    --mount=type=cache,target=/root/.cache/yarn \
-    --mount=type=cache,target=/usr/local/share/.cache/yarn \
+RUN --mount=type=cache,sharing=locked,id=consul/${CONSUL_VERSION}/root/.yarn,target=/root/.yarn \
+    --mount=type=cache,sharing=locked,id=consul/${CONSUL_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
+    --mount=type=cache,sharing=locked,id=consul/${CONSUL_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
 <<EOF
     apk add --no-cache --virtual .build-deps curl git patch make
     (set -x; make ui-regen)
@@ -50,9 +51,10 @@ RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-la
 
 # Build the consul binary
 ARG TARGETARCH
+ARG CONSUL_VERSION
 ARG DOCKER_CACHE_PURGE
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,target=/go/pkg/mod \
+RUN --mount=type=cache,sharing=locked,id=consul/${CONSUL_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF
     apk add --no-cache --virtual .build-deps curl bash git patch

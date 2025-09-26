@@ -25,7 +25,9 @@ variable "CONSUL_VERSIONS" {
     "1.21.5",
   ]
 }
-
+target "consul-base" {
+  context = "consul/base"
+}
 target "consul" {
   matrix = {
     version = CONSUL_VERSIONS
@@ -36,6 +38,9 @@ target "consul" {
     "github-metadata-action",
   ]
   context = "consul/${version}"
+  contexts = {
+    "consul" = "target:consul-base"
+  }
   platforms = [
     "linux/amd64",
     "linux/arm64",

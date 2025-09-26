@@ -2,7 +2,7 @@ ARG CONSUL_VERSION=1.21.4
 ARG GO_VERSION=1.23.12
 ARG NODE_VERSION=20
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3
 ARG DOCKER_CACHE_PURGE=1
 
 # Stage 0: Clone the consul repository
@@ -89,6 +89,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 EOF
 
 # Final stage
-FROM hashicorp/consul:${CONSUL_VERSION}
+FROM consul
 ARG TARGETARCH
 COPY --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul

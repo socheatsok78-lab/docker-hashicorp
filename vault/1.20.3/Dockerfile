@@ -21,7 +21,7 @@ ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 RUN --mount=type=cache,target=/root/.yarn \
     --mount=type=cache,target=/root/.cache/yarn \
     --mount=type=cache,target=/usr/local/share/.cache/yarn \
-    <<EOF
+<<EOF
     apk add --no-cache --virtual .build-deps curl git patch make
     (set -x; make ember-dist)
 
@@ -47,7 +47,7 @@ ARG TARGETARCH
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
-    <<EOF
+<<EOF
     apk add --no-cache --virtual .build-deps curl bash git patch
 
     go mod tidy

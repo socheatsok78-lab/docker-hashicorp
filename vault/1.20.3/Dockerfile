@@ -90,4 +90,4 @@ EOF
 # Stage 3: Final stage
 FROM vault
 ARG TARGETARCH
-COPY --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault
+COPY --link --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault

@@ -91,4 +91,4 @@ EOF
 # Final stage
 FROM consul
 ARG TARGETARCH
-COPY --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul
+COPY --link --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul

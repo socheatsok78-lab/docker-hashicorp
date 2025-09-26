@@ -62,7 +62,9 @@ variable "VAULT_VERSIONS" {
     "1.20.4",
   ]
 }
-
+target "vault-base" {
+  context = "vault/base"
+}
 target "vault" {
   matrix = {
     version = VAULT_VERSIONS
@@ -73,6 +75,9 @@ target "vault" {
     "github-metadata-action",
   ]
   context = "vault/${version}"
+  contexts = {
+    "vault" = "target:vault-base"
+  }
   platforms = [
     "linux/amd64",
     "linux/arm64",

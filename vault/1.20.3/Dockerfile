@@ -2,7 +2,7 @@ ARG VAULT_VERSION=1.20.3
 ARG GO_VERSION=1.24.6
 ARG NODE_VERSION=20
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3
 ARG DOCKER_CACHE_PURGE=1
 
 # Stage 0: Clone the Vault repository
@@ -88,6 +88,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 EOF
 
 # Stage 3: Final stage
-FROM hashicorp/vault:${VAULT_VERSION}
+FROM vault
 ARG TARGETARCH
 COPY --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault

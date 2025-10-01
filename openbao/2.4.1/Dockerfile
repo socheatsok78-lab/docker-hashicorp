@@ -4,7 +4,7 @@ ARG NODE_VERSION=20
 
 ARG ALPINE_VERSION=3
 ARG DOCKER_CACHE_KEY=openbao
-ARG DOCKER_CACHE_PURGE=1
+ARG DOCKER_CACHE_PURGE=true
 
 # Stage 0: Clone the Vault repository
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
@@ -32,7 +32,7 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/ro
     (set -x; make ember-dist)
 
     # cleanup, if requested
-    if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
+    if [[ "${DOCKER_CACHE_PURGE}" == "true" ]]; then
         rm -rf /vault/ui/node_modules
         rm -rf /root/.yarn/* /root/.cache/yarn/* /usr/local/share/.cache/yarn/*
     fi
@@ -84,7 +84,7 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
     done
 
     # cleanup, if requested
-    if [[ "${DOCKER_CACHE_PURGE}" == "1" ]]; then
+    if [[ "${DOCKER_CACHE_PURGE}" == "true" ]]; then
         rm -rf /go/pkg/mod/*
         rm -rf /root/.cache/go-build/*
     fi

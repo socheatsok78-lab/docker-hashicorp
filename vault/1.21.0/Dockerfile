@@ -1,9 +1,9 @@
-ARG VAULT_VERSION=2.4.1
-ARG GO_VERSION=1.24.6
+ARG VAULT_VERSION=1.21.0
+ARG GO_VERSION=1.25.1
 ARG NODE_VERSION=20
 
 ARG ALPINE_VERSION=3
-ARG DOCKER_CACHE_KEY=openbao
+ARG DOCKER_CACHE_KEY=vault
 ARG DOCKER_CACHE_PURGE=true
 
 # Stage 0: Clone the Vault repository
@@ -11,7 +11,7 @@ FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
 ARG VAULT_VERSION
 RUN <<EOT
     apk add --no-cache --virtual .build-deps curl git
-    git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://github.com/openbao/openbao.git /vault
+    git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://github.com/hashicorp/vault.git /vault
     apk del .build-deps
 EOT
 
@@ -48,6 +48,7 @@ COPY --link --from=stage1 /vault/http/web_ui/ /vault/http/web_ui/
 WORKDIR /vault
 
 # Replace dependencies with alternative forks or versions
+RUN echo "replace github.com/hashicorp/go-cmp => github.com/google/go-cmp v0.7.0" >> go.mod
 RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
 
 # Build the Vault binary
@@ -65,7 +66,7 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
     # (cd api && go mod tidy)
     # (cd sdk && go mod tidy)
 
-    GIT_IMPORT="github.com/openbao/openbao/version"
+    GIT_IMPORT="github.com/hashicorp/vault/version"
     GIT_COMMIT=$(git rev-parse --short HEAD)
     GIT_COMMIT_YEAR=$(git show -s --format=%cd --date=format:%Y HEAD)
     GIT_DIRTY=$(test -n "`git status --porcelain`" && echo "+CHANGES" || true)
@@ -75,7 +76,6 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
 
     GOTAGS="vault ui"
     GOLDFLAGS="-w -s"
-    GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.fullVersion=${VAULT_VERSION}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.GitCommit=${GIT_COMMIT}${GIT_DIRTY}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.BuildDate=${GIT_DATE}"
     for GOARCH in amd64 arm64; do
@@ -91,9 +91,7 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
     apk del .build-deps
 EOF
 
-# Final stage
-FROM openbao
+# Stage 3: Final stage
+FROM vault
 ARG TARGETARCH
-COPY --link --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/openbao /bin/bao
-RUN ln -s /bin/bao /bin/vault
-USER openbao
+COPY --link --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault

@@ -1,29 +1,33 @@
 name: test
-run-name: test ${{ inputs.target }} v${{ inputs.version }}
 
 on:
-  workflow_dispatch:
-    inputs:
-      target:
-        type: choice
-        description: 'Select target to build'
-        required: true
-        options:
-          - consul
-          - openbao
-          - vault
-      version:
-        type: string
-        description: 'Specify version to build'
-        required: true
-
+  pull_request:
+    
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate matrix
+        id: generate
+        run: ./scripts/generate-pr-build-matrix.sh
+
   build:
     runs-on: ubuntu-latest
+    needs:
+      - prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
       contents: read
       packages: write
@@ -45,11 +49,11 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v6
         env:
-          CONSUL_VERSIONS: ${{ inputs.version }}
-          VAULT_VERSIONS: ${{ inputs.version }}
-          OPENBAO_VERSIONS: ${{ inputs.version }}
+          CONSUL_VERSIONS: ${{ matrix.version }}
+          VAULT_VERSIONS: ${{ matrix.version }}
+          OPENBAO_VERSIONS: ${{ matrix.version }}
         with:
-          targets: ${{ inputs.target}}
+          targets: ${{ matrix.target }}
           push: false
           files: |
             ./docker-bake.hcl

@@ -20,8 +20,8 @@ group "default" {
 variable "CONSUL_VERSIONS" {
   type = list(string)
   default = [
-    "1.21.3",
-    "1.21.4",
+    // "1.21.3",
+    // "1.21.4",
     "1.21.5",
   ]
 }
@@ -68,11 +68,11 @@ target "consul" {
 variable "VAULT_VERSIONS" {
   type = list(string)
   default = [
-    "1.20.0",
-    "1.20.1",
-    "1.20.2",
-    "1.20.3",
-    "1.20.4",
+    // "1.20.0",
+    // "1.20.1",
+    // "1.20.2",
+    // "1.20.3",
+    // "1.20.4",
     "1.21.0",
   ]
 }
@@ -119,9 +119,9 @@ target "vault" {
 variable "OPENBAO_VERSIONS" {
   type = list(string)
   default = [
-    "2.4.0",
-    "2.4.1",
-    "2.4.2",
+    // "2.4.0",
+    // "2.4.1",
+    // "2.4.2",
     "2.4.3",
   ]
 }

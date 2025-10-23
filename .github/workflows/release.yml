@@ -1,5 +1,4 @@
 name: release
-run-name: release ${{ inputs.target }} v${{ inputs.version }}
 
 on:
   push:

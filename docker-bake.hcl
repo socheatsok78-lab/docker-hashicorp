@@ -73,6 +73,7 @@ variable "VAULT_VERSIONS" {
     // "1.20.2",
     // "1.20.3",
     "1.20.4",
+    "1.21.0",
   ]
 }
 target "vault-base" {

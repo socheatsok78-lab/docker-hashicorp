@@ -7,17 +7,8 @@ set -euo pipefail
 # consul/1.22.0/Dockerfile
 # vault/1.10.0/Dockerfile
 
-GITHUB_BASE_REF=${GITHUB_BASE_REF:-main}
-GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-}
-GITHUB_OUTPUT=${GITHUB_OUTPUT:-/dev/stdout}
-
-if [ -z "$GITHUB_HEAD_REF" ]; then
-  echo "This script should be run in the context of a pull request."
-  exit 1
-fi
-
 declare -a build_matrix=()
-for file in $(git diff "origin/${GITHUB_BASE_REF}" "HEAD" --name-only); do
+for file in $(git diff-tree --no-commit-id --name-only HEAD -r); do
 	if [[ "${file}" == *"Dockerfile" ]]; then
 		# Extract target and version from the file path
 		target=$(echo "${file}" | cut -d'/' -f1)

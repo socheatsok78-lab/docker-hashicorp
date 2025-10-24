@@ -1,13 +1,7 @@
 name: release
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'docker-bake.hcl'
-      - '**/**/Dockerfile'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

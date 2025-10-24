@@ -23,6 +23,7 @@ variable "CONSUL_VERSIONS" {
     // "1.21.3",
     // "1.21.4",
     "1.21.5",
+    "1.22.0",
   ]
 }
 target "consul-base" {

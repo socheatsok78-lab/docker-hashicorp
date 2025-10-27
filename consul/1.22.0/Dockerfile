@@ -52,7 +52,6 @@ WORKDIR /consul
 RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
 
 # Build the consul binary
-ARG TARGETARCH
 ARG CONSUL_VERSION
 ARG DOCKER_CACHE_KEY
 ARG DOCKER_CACHE_PURGE
@@ -78,6 +77,7 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/g
     GOLDFLAGS="-w -s"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.GitCommit=${GIT_COMMIT}${GIT_DIRTY}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.BuildDate=${GIT_DATE}"
+    
     for GOARCH in amd64 arm64; do
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)

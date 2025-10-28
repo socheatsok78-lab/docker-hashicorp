@@ -94,5 +94,3 @@ EOF
 FROM vault
 ARG TARGETARCH
 COPY --link --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault
-
-# chore/trigger-builds

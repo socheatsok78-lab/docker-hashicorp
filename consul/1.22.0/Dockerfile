@@ -94,3 +94,5 @@ EOF
 FROM consul
 ARG TARGETARCH
 COPY --link --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul
+
+# chore/trigger-builds

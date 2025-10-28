@@ -1,8 +1,18 @@
 name: PR Build
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, labeled]
+  workflow_dispatch:
+    inputs:
+      target:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+      push:
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,24 +21,13 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.generate.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Generate matrix
-        id: generate
-        run: ./.github/scripts/generate-pr-build-matrix.sh
+      - run: sleep 10
 
   build:
     runs-on: ubuntu-latest
     needs:
       - prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
       contents: read
       packages: write
@@ -47,7 +46,7 @@ jobs:
         id: github-meta
         uses: dockerbakery/github-metadata-action@v3
 
-      - if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
+      - if: inputs.push
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -58,12 +57,12 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v6
         env:
-          CONSUL_VERSIONS: ${{ matrix.version }}
-          VAULT_VERSIONS: ${{ matrix.version }}
-          OPENBAO_VERSIONS: ${{ matrix.version }}
+          CONSUL_VERSIONS: ${{ inputs.version }}
+          VAULT_VERSIONS: ${{ inputs.version }}
+          OPENBAO_VERSIONS: ${{ inputs.version }}
         with:
-          targets: ${{ matrix.target }}
-          push: false
+          targets: ${{ inputs.target }}
+          push: ${{ inputs.push }}
           files: |
             ./docker-bake.hcl
             cwd://${{ steps.docker-meta.outputs.bake-file-labels }}
@@ -71,20 +70,4 @@ jobs:
             cwd://${{ steps.github-meta.outputs.bake-file }}
           set: |
             *.cache-from=type=gha
-            ${{ contains(github.event.pull_request.labels.*.name, 'pr-pull') && '*.cache-to=type=gha,mode=max' || ''}}
-
-  pr-merge:
-    if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
-    runs-on: ubuntu-latest
-    needs:
-      - build
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Evaluate the PR for merging
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:
-          gh pr merge --repo ${{ github.repository }} --merge ${{ github.event.pull_request.number }} --delete-branch
+            ${{ inputs.push && '*.cache-to=type=gha,mode=max' || ''}}

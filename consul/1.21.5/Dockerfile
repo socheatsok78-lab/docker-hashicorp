@@ -52,7 +52,6 @@ WORKDIR /consul
 RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
 
 # Build the consul binary
-ARG TARGETARCH
 ARG CONSUL_VERSION
 ARG DOCKER_CACHE_KEY
 ARG DOCKER_CACHE_PURGE

@@ -52,7 +52,6 @@ RUN echo "replace github.com/hashicorp/go-cmp => github.com/google/go-cmp v0.7.0
 RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
 
 # Build the Vault binary
-ARG TARGETARCH
 ARG VAULT_VERSION
 ARG DOCKER_CACHE_KEY
 ARG DOCKER_CACHE_PURGE

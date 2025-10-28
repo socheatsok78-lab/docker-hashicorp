@@ -31,9 +31,12 @@ jobs:
         include: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
       contents: read
-      packages: write
+      actions: write
     steps:
-      - run: |
+      - name: Dispatch PR Build workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           gh workflow run pr-build.yml --repo ${{ github.repository }} --ref ${{ github.head_ref }} \
             --field target=${{ matrix.target }} \
             --field version=${{ matrix.version }} \

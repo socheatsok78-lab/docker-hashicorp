@@ -48,7 +48,7 @@ COPY --link --from=stage1 /vault/http/web_ui/ /vault/http/web_ui/
 WORKDIR /vault
 
 # Replace dependencies with alternative forks or versions
-RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
+RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs
 
 # Build the Vault binary
 ARG VAULT_VERSION

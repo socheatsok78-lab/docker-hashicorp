@@ -49,7 +49,7 @@ COPY --link --from=stage1 /consul/agent/uiserver/ /consul/agent/uiserver/
 WORKDIR /consul
 
 # Replace the go-discover dependency with the socheatsok78-lab version
-RUN echo "replace github.com/hashicorp/go-discover => github.com/socheatsok78-lab/go-discover go-netaddrs" >> go.mod
+RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs
 
 # Build the consul binary
 ARG CONSUL_VERSION

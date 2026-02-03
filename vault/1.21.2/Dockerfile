@@ -49,7 +49,7 @@ WORKDIR /vault
 
 # Replace dependencies with alternative forks or versions
 # RUN go mod edit -replace github.com/hashicorp/go-cmp=github.com/google/go-cmp@v0.7.0
-RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs
+RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs-v1.1.0
 
 # Build the Vault binary
 ARG VAULT_VERSION

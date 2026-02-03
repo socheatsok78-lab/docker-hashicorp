@@ -25,6 +25,7 @@ variable "CONSUL_VERSIONS" {
     "1.21.5",
     "1.22.0",
     "1.22.1",
+    "1.22.2",
     "1.22.3",
   ]
 }
@@ -78,6 +79,7 @@ variable "VAULT_VERSIONS" {
     "1.20.4",
     "1.21.0",
     "1.21.1",
+    "1.21.2",
   ]
 }
 target "vault-base" {

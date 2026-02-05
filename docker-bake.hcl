@@ -29,7 +29,7 @@ variable "CONSUL_VERSIONS" {
     "1.22.3",
   ]
 }
-target "consul-base" {
+target "consul_base" {
   context = "consul/base"
   platforms = [
     "linux/amd64",
@@ -50,7 +50,7 @@ target "consul" {
   ]
   context = "consul/${version}"
   contexts = {
-    "consul" = "target:consul-base"
+    "consul" = "target:consul_base"
   }
   platforms = [
     "linux/amd64",
@@ -82,7 +82,7 @@ variable "VAULT_VERSIONS" {
     "1.21.2",
   ]
 }
-target "vault-base" {
+target "vault_base" {
   context = "vault/base"
   platforms = [
     "linux/amd64",
@@ -103,7 +103,7 @@ target "vault" {
   ]
   context = "vault/${version}"
   contexts = {
-    "vault" = "target:vault-base"
+    "vault" = "target:vault_base"
   }
   platforms = [
     "linux/amd64",
@@ -132,7 +132,7 @@ variable "OPENBAO_VERSIONS" {
     "2.4.4",
   ]
 }
-target "openbao-base" {
+target "openbao_base" {
   context = "openbao/base"
   platforms = [
     "linux/amd64",
@@ -153,7 +153,7 @@ target "openbao" {
   ]
   context = "openbao/${version}"
   contexts = {
-    "openbao" = "target:openbao-base"
+    "openbao" = "target:openbao_base"
   }
   platforms = [
     "linux/amd64",

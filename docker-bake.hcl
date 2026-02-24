@@ -132,6 +132,7 @@ variable "OPENBAO_VERSIONS" {
     "2.4.3",
     "2.4.4",
     "2.5.0",
+    "2.5.1",
   ]
 }
 target "openbao_base" {

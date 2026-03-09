@@ -1,10 +1,14 @@
 on:
   workflow_call:
     inputs:
-      version:
+      target:
         type: string
         default: default
-        description: 'Bake version to build'
+        description: 'Bake target to build'
+      version:
+        type: string
+        required: true
+        description: 'Build target version tag'
       permit-login:
         type: boolean
         default: false
@@ -64,8 +68,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         with:
-          source: "{{defaultContext}}:${{ matrix.target }}"
-          targets: ${{ matrix.target }}
+          source: "{{defaultContext}}:${{ inputs.target }}"
+          targets: ${{ inputs.target }}
           push: ${{ inputs.permit-push }}
           files: |
             ./docker-bake.hcl

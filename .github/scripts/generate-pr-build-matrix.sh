@@ -19,27 +19,29 @@ if [ -z "$GITHUB_HEAD_REF" ]; then
   exit 1
 fi
 
-TEMPLATES_CHANGED=false
+BASE_IMAGE_CHANGES=""
 
 echo "File changed:"
 for file in $(git diff "origin/${GITHUB_BASE_REF}" "HEAD" --name-only); do
 	echo "- ${file}"
-	if [[ "${file}" == *"/base/Dockerfile" ]]; then
-		TEMPLATES_CHANGED=true
-	fi
 	if [[ "${file}" == *"/.empty" ]] || [[ "${file}" == *"/Dockerfile" ]]; then
 		# Extract target and version from the file path
 		target=$(echo "${file}" | cut -d'/' -f1)
 		version=$(echo "${file}" | cut -d'/' -f2)
+		if [[ "${version}" == "base" ]]; then
+			echo "- Skipping ${version} change for ${target} as it is a base image and not a specific version."
+			BASE_IMAGE_CHANGES+=" ${target}"
+			continue
+		fi
 		# Add to build matrix
 		echo "{\"target\":\"${target}\",\"version\":\"${version}\"}" >> "$BUILD_MATRIX_MANIFEST"
 	fi
 done
 
 # If any template Dockerfile has changed, we need to run the full build matrix generation script to ensure all relevant targets are included.
-if [ "$TEMPLATES_CHANGED" = true ]; then
+if [ -n "$BASE_IMAGE_CHANGES" ]; then
 	echo "::warning::The template files have changed. Running the full build matrix generation script to ensure all relevant targets are included."
-	"$(dirname "$0")"/generate-build-matrix.sh
+	"$(dirname "$0")"/generate-build-matrix.sh "${BASE_IMAGE_CHANGES}"
 	exit 0
 fi
 

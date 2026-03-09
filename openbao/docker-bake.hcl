@@ -26,7 +26,7 @@ variable "OPENBAO_VERSIONS" {
   ]
 }
 target "openbao_base" {
-  context = "openbao/base"
+  context = "base"
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -40,7 +40,7 @@ target "openbao" {
     "docker-metadata-action",
     "github-metadata-action",
   ]
-  context = "openbao/${VERSION}"
+  context = "${VERSION}"
   contexts = {
     "openbao" = "target:openbao_base"
   }

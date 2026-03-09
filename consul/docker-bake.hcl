@@ -14,7 +14,7 @@ target "docker-metadata-action" {}
 target "github-metadata-action" {}
 
 target "consul_base" {
-  context = "consul/base"
+  context = "base"
   platforms = [
     "linux/amd64",
     "linux/arm64",
@@ -28,7 +28,7 @@ target "consul" {
     "docker-metadata-action",
     "github-metadata-action",
   ]
-  context = "consul/${VERSION}"
+  context = "${VERSION}"
   contexts = {
     "consul" = "target:consul_base"
   }

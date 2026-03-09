@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+function github.log() {
+	if [ -z "${QUIET_LOGS:-}" ]; then
+		echo "$@"
+	fi
+}
+
 # This script detects files changed in a pull request compared to the main branch.
 # It looks for Dockerfiles among the changed files and generates a build matrix accordingly.
 # Example:
@@ -8,26 +14,31 @@ set -euo pipefail
 GITHUB_OUTPUT=${GITHUB_OUTPUT:-/dev/null}
 
 RUNNER_TEMP=${RUNNER_TEMP:-$(pwd)}
+_BUILD_MATRIX_MANIFEST=${BUILD_MATRIX_MANIFEST:-}
 BUILD_MATRIX_MANIFEST=$(mktemp -p "${RUNNER_TEMP}")
-trap 'rm -f "$BUILD_MATRIX_MANIFEST"' EXIT
-
-IMAGES=${IMAGES:-${@}}
-if [[ -z "${IMAGES}" ]]; then
-	# shellcheck disable=SC2231
-	IMAGES=$(ls **/docker-bake.hcl | cut -d/ -f1)
+if [[ -z "${_BUILD_MATRIX_MANIFEST}" ]]; then
+	trap 'rm -f "$BUILD_MATRIX_MANIFEST"' EXIT
+else
+	BUILD_MATRIX_MANIFEST=${_BUILD_MATRIX_MANIFEST}
 fi
 
-echo "File changed:"
+LIBRARIES=${LIBRARIES:-${@}}
+if [[ -z "${LIBRARIES}" ]]; then
+	# shellcheck disable=SC2231
+	LIBRARIES=$(ls **/docker-bake.hcl | cut -d/ -f1)
+fi
+
+github.log "File changed:"
 # shellcheck disable=SC2231
-for image in ${IMAGES}; do
-	for file in ${image}/**/Dockerfile; do
-		echo "- ${file}"
+for lib in ${LIBRARIES}; do
+	for file in ${lib}/**/Dockerfile; do
+		github.log "- ${file}"
 		if [[ "${file}" == *"/.empty" ]] || [[ "${file}" == *"/Dockerfile" ]]; then
 			# Extract target and version from the file path
 			target=$(echo "${file}" | cut -d'/' -f1)
 			version=$(echo "${file}" | cut -d'/' -f2)
 			if [[ "${version}" == "base" ]]; then
-				echo "- Skipping ${version} change for ${target} as it is a base image and not a specific version."
+				github.log "- Skipping ${version} change for ${target} as it is a base image and not a specific version."
 				continue
 			fi
 			# Add to build matrix
@@ -37,8 +48,10 @@ for image in ${IMAGES}; do
 done
 
 # Build JSON array and write to GITHUB_OUTPUT, quoting to prevent word splitting.
-echo "Generating build matrix..."
-cat "$BUILD_MATRIX_MANIFEST" | sort -r | uniq | jq -s '.'
+if [ -z "${QUIET_LOGS:-}" ]; then
+	github.log "Generating build matrix..."
+	cat "$BUILD_MATRIX_MANIFEST" | sort -r | uniq | jq -s '.'
+fi
 
 # Set the output variable for GitHub Actions
 matrix_json=$(cat "$BUILD_MATRIX_MANIFEST" | sort | uniq | jq -sc '.')

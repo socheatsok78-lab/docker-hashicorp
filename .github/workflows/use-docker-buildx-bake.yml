@@ -77,5 +77,5 @@ jobs:
             cwd://${{ steps.docker-meta.outputs.bake-file-annotations }}
             cwd://${{ steps.github-meta.outputs.bake-file }}
           set: |
-            ${{ inputs.permit-cache && '*.cache-from=type=gha' || ''}}
+            *.cache-from=type=gha
             ${{ inputs.permit-cache && '*.cache-to=type=gha,mode=max' || ''}}

@@ -16,6 +16,10 @@ on:
         description: "The version of the software to build (e.g. 'latest' or '1.0.0')"
         required: false
         default: ""
+      push:
+        description: "Whether to allow pushing the built images to the registry (true/false)"
+        required: false
+        default: "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -50,7 +54,7 @@ jobs:
     with:
       target: ${{ matrix.target }}
       version: ${{ matrix.version }}
-      permit-login: true
-      permit-push: ${{ github.event_name != 'pull_request' }}
+      permit-login: ${{ inputs.push }}
+      permit-push: ${{ inputs.push }}
       permit-cache: true
     secrets: inherit

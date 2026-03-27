@@ -60,6 +60,8 @@ jobs:
         uses: docker/bake-action@v7
         env:
           VERSION: ${{ inputs.version }}
+          # See https://docs.docker.com/reference/dockerfile/#example-keep-git-dir
+          BUILDKIT_CONTEXT_KEEP_GIT_DIR: "1"
         with:
           source: "{{defaultContext}}:${{ inputs.target }}"
           targets: ${{ inputs.target }}

@@ -44,9 +44,6 @@ target "openbao" {
   contexts = {
     "openbao" = "target:openbao_base"
   }
-  args = {
-    "BUILDKIT_CONTEXT_KEEP_GIT_DIR" = "1"
-  }
   platforms = [
     "linux/amd64",
     "linux/arm64",

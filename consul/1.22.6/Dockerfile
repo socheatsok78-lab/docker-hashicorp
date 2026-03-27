@@ -24,7 +24,7 @@ ARG CONSUL_VERSION
 WORKDIR /consul
 RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
 <<EOF sh
-    set -x
+    set -ex
     make ui-regen
     cp -a /consul/agent/uiserver /uiserver
 EOF
@@ -45,7 +45,7 @@ RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
     --mount=type=cache,sharing=locked,id=go-${GO_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF sh
-    set -e
+    set -ex
 
     # Replace the go-discover dependency with the socheatsok78-lab version
     go mod edit -replace github.com/hashicorp/go-discover=${GO_DISCOVER_REPO}@${GO_DISCOVER_VERSION}

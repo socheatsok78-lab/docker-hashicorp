@@ -2,55 +2,53 @@ ARG CONSUL_VERSION=1.22.6
 ARG GO_VERSION=1.25.8
 ARG NODE_VERSION=20
 
-ARG ALPINE_VERSION=3
-ARG DOCKER_CACHE_KEY=consul
+ARG GO_DISCOVER_REPO=github.com/socheatsok78-lab/go-discover
+ARG GO_DISCOVER_VERSION=go-netaddrs-v1.2.0
+ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
+
+FROM golang:${GO_VERSION}-alpine AS builder-golang
+RUN apk add --no-cache bash curl git patch
+
+FROM node:${NODE_VERSION}-alpine AS builder-node
+RUN apk add --no-cache bash curl git patch make go
+RUN npm install -g corepack && corepack disable && corepack enable
 
 # Stage 0: Clone the consul repository
-FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
+FROM --platform=$BUILDPLATFORM builder-golang AS stage0
 ARG CONSUL_VERSION
-RUN <<EOT
-    apk add --no-cache --virtual .build-deps curl git
-    git clone --depth=1 --branch=v${CONSUL_VERSION} --single-branch https://github.com/hashicorp/consul.git /consul
-    apk del .build-deps
-EOT
+RUN git clone --depth=1 --branch=v${CONSUL_VERSION} --single-branch https://github.com/hashicorp/consul.git /consul
 
 # Stage 1: Build the UI
-FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS stage1
-RUN apk add --no-cache bash git patch make go
-RUN npm install -g corepack && corepack disable && corepack enable
-COPY --link --from=stage0 /consul /consul
-WORKDIR /consul
-ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
+FROM --platform=$BUILDPLATFORM builder-node AS stage1
 ARG CONSUL_VERSION
-ARG DOCKER_CACHE_KEY
-RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/root/.yarn,target=/root/.yarn \
-    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
-    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
-<<EOF
-    apk add --no-cache --virtual .build-deps curl git patch make
-    (set -x; make ui-regen)
-    apk del .build-deps
+WORKDIR /consul
+RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
+<<EOF sh
+    set -x
+    make ui-regen
+    cp -a /consul/agent/uiserver /uiserver
 EOF
 
 # Stage 2: Build the consul binary
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS stage2
-
-# Copy the consul source code from the previous stage
-COPY --link --from=stage0 /consul /consul
-COPY --link --from=stage1 /consul/agent/uiserver/ /consul/agent/uiserver/
-WORKDIR /consul
-
-# Replace the go-discover dependency with the socheatsok78-lab version
-RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs-v1.2.0
+FROM --platform=$BUILDPLATFORM builder-golang AS stage2
 
 # Build the consul binary
+ARG TARGETARCH
 ARG CONSUL_VERSION
-ARG DOCKER_CACHE_KEY
-ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/go/pkg/mod,target=/go/pkg/mod \
+ARG GO_VERSION
+ARG GO_DISCOVER_REPO
+ARG GO_DISCOVER_VERSION
+ARG GITHUB_REPOSITORY_OWNER
+WORKDIR /consul
+RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
+    --mount=type=bind,from=stage1,source=/uiserver,target=/consul/agent/uiserver \
+    --mount=type=cache,sharing=locked,id=go-${GO_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
-<<EOF
-    apk add --no-cache --virtual .build-deps curl bash git patch
+<<EOF sh
+    set -e
+
+    # Replace the go-discover dependency with the socheatsok78-lab version
+    go mod edit -replace github.com/hashicorp/go-discover=${GO_DISCOVER_REPO}@${GO_DISCOVER_VERSION}
 
     go mod tidy
     # (cd api && go mod tidy)
@@ -68,14 +66,10 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${CONSUL_VERSION}/g
     GOLDFLAGS="-w -s"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.GitCommit=${GIT_COMMIT}${GIT_DIRTY}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.BuildDate=${GIT_DATE}"
-    for GOARCH in amd64 arm64; do
-        mkdir -p ./pkg/bin/linux_${GOARCH}
-        (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
-    done
-    apk del .build-deps
+
+    (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /usr/local/bin/consul -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
 EOF
 
 # Final stage
 FROM consul
-ARG TARGETARCH
-COPY --link --from=stage2 /consul/pkg/bin/linux_${TARGETARCH}/consul /bin/consul
+COPY --link --from=stage2 /usr/local/bin/consul /bin/consul

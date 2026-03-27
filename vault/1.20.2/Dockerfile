@@ -4,7 +4,6 @@ ARG NODE_VERSION=20
 
 ARG ALPINE_VERSION=3
 ARG DOCKER_CACHE_KEY=vault
-ARG DOCKER_CACHE_PURGE=true
 
 # Stage 0: Clone the Vault repository
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
@@ -23,19 +22,12 @@ WORKDIR /vault
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 ARG VAULT_VERSION
 ARG DOCKER_CACHE_KEY
-ARG DOCKER_CACHE_PURGE
 RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.yarn,target=/root/.yarn \
     --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
     --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
 <<EOF
     apk add --no-cache --virtual .build-deps curl git patch make
     (set -x; make ember-dist)
-
-    # cleanup, if requested
-    if [[ "${DOCKER_CACHE_PURGE}" == "true" ]]; then
-        rm -rf /vault/ui/node_modules
-        rm -rf /root/.yarn/* /root/.cache/yarn/* /usr/local/share/.cache/yarn/*
-    fi
     apk del .build-deps
 EOF
 
@@ -53,7 +45,6 @@ RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok7
 # Build the Vault binary
 ARG VAULT_VERSION
 ARG DOCKER_CACHE_KEY
-ARG DOCKER_CACHE_PURGE
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
@@ -80,12 +71,6 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
         mkdir -p ./pkg/bin/linux_${GOARCH}
         (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
     done
-
-    # cleanup, if requested
-    if [[ "${DOCKER_CACHE_PURGE}" == "true" ]]; then
-        rm -rf /go/pkg/mod/*
-        rm -rf /root/.cache/go-build/*
-    fi
     apk del .build-deps
 EOF
 

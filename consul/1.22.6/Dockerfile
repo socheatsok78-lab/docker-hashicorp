@@ -6,10 +6,10 @@ ARG GO_DISCOVER_REPO=github.com/socheatsok78-lab/go-discover
 ARG GO_DISCOVER_VERSION=go-netaddrs-v1.2.0
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 
-FROM golang:${GO_VERSION}-alpine AS builder-golang
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder-golang
 RUN apk add --no-cache bash curl git patch
 
-FROM node:${NODE_VERSION}-alpine AS builder-node
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder-node
 RUN apk add --no-cache bash curl git patch make go
 RUN npm install -g corepack && corepack disable && corepack enable
 

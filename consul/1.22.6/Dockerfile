@@ -23,7 +23,7 @@ FROM --platform=$BUILDPLATFORM builder-node AS stage1
 ARG CONSUL_VERSION
 WORKDIR /consul
 RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
-<<EOF sh
+<<EOF
     set -ex
     make ui-regen
     cp -a /consul/agent/uiserver /uiserver
@@ -44,7 +44,7 @@ RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
     --mount=type=bind,from=stage1,source=/uiserver,target=/consul/agent/uiserver \
     --mount=type=cache,sharing=locked,id=go-${GO_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
-<<EOF sh
+<<EOF
     set -ex
 
     # Replace the go-discover dependency with the socheatsok78-lab version
@@ -67,7 +67,7 @@ RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.GitCommit=${GIT_COMMIT}${GIT_DIRTY}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.BuildDate=${GIT_DATE}"
 
-    (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /usr/local/bin/consul -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
+    CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /usr/local/bin/consul -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .
 EOF
 
 # Final stage

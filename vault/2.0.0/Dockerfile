@@ -13,7 +13,7 @@ FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder-node
 RUN apk add --no-cache bash curl git patch make go
 RUN npm install -g corepack && corepack disable && corepack enable
 
-# Stage 0: Clone the Vault repository
+# Stage 0: Clone the repository
 FROM --platform=$BUILDPLATFORM builder-golang AS stage0
 ARG VAULT_VERSION
 RUN git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://github.com/hashicorp/vault.git /vault
@@ -29,7 +29,7 @@ RUN --mount=type=bind,from=stage0,source=/vault,target=/vault,rw \
     cp -a /vault/http/web_ui/ /web_ui
 EOF
 
-# Stage 2: Build the Vault binary
+# Stage 2: Build the binary
 FROM --platform=$BUILDPLATFORM builder-golang AS stage2
 
 ARG TARGETARCH

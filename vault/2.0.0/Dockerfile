@@ -2,55 +2,52 @@ ARG VAULT_VERSION=2.0.0
 ARG GO_VERSION=1.26.1
 ARG NODE_VERSION=20
 
-ARG ALPINE_VERSION=3
-ARG DOCKER_CACHE_KEY=vault
+ARG GO_DISCOVER_REPO=github.com/socheatsok78-lab/go-discover
+ARG GO_DISCOVER_VERSION=go-netaddrs-v1.2.0
+ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 
-# Stage 0: Clone the Vault repository
-FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS stage0
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder-golang
+RUN apk add --no-cache bash curl git patch
+
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder-node
+RUN apk add --no-cache bash curl git patch make go
+RUN npm install -g corepack && corepack disable && corepack enable
+
+# Stage 0: Clone the repository
+FROM --platform=$BUILDPLATFORM builder-golang AS stage0
 ARG VAULT_VERSION
-RUN <<EOT
-    apk add --no-cache --virtual .build-deps curl git
-    git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://github.com/hashicorp/vault.git /vault
-    apk del .build-deps
-EOT
+RUN git clone --depth=1 --branch=v${VAULT_VERSION} --single-branch https://github.com/hashicorp/vault.git /vault
 
 # Stage 1: Build the UI
-FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS stage1
-RUN npm install -g corepack && corepack disable && corepack enable
-COPY --link --from=stage0 /vault /vault
-WORKDIR /vault
-ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
+FROM --platform=$BUILDPLATFORM builder-node AS stage1
 ARG VAULT_VERSION
-ARG DOCKER_CACHE_KEY
-RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.yarn,target=/root/.yarn \
-    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/root/.cache/yarn,target=/root/.cache/yarn \
-    --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
+WORKDIR /vault
+RUN --mount=type=bind,from=stage0,source=/vault,target=/vault,rw \
 <<EOF
-    apk add --no-cache --virtual .build-deps curl git patch make
-    (set -x; make ember-dist)
-    apk del .build-deps
+    set -ex
+    make ember-dist
+    cp -a /vault/http/web_ui/ /web_ui
 EOF
 
-# Stage 2: Build the Vault binary
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS stage2
+# Stage 2: Build the binary
+FROM --platform=$BUILDPLATFORM builder-golang AS stage2
 
-# Copy the Vault source code from the previous stage
-COPY --link --from=stage0 /vault /vault
-COPY --link --from=stage1 /vault/http/web_ui/ /vault/http/web_ui/
-WORKDIR /vault
-
-# Replace dependencies with alternative forks or versions
-# RUN go mod edit -replace github.com/hashicorp/go-cmp=github.com/google/go-cmp@v0.7.0
-RUN go mod edit -replace github.com/hashicorp/go-discover=github.com/socheatsok78-lab/go-discover@go-netaddrs-v1.1.0
-
-# Build the Vault binary
+ARG TARGETARCH
 ARG VAULT_VERSION
-ARG DOCKER_CACHE_KEY
-ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
-RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go/pkg/mod,target=/go/pkg/mod \
+ARG GO_VERSION
+ARG GO_DISCOVER_REPO
+ARG GO_DISCOVER_VERSION
+ARG GITHUB_REPOSITORY_OWNER
+WORKDIR /vault
+RUN --mount=type=bind,from=stage0,source=/vault,target=/vault,rw \
+    --mount=type=bind,from=stage1,source=/web_ui,target=/vault/http/web_ui/ \
+    --mount=type=cache,sharing=locked,id=go-${GO_VERSION}/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF
-    apk add --no-cache --virtual .build-deps curl bash git patch
+    set -ex
+
+    # Replace the go-discover dependency with the socheatsok78-lab version
+    go mod edit -replace github.com/hashicorp/go-discover=${GO_DISCOVER_REPO}@${GO_DISCOVER_VERSION}
 
     go mod tidy
     (set -x; cd api && go mod tidy)
@@ -68,14 +65,10 @@ RUN --mount=type=cache,sharing=locked,id=${DOCKER_CACHE_KEY}/${VAULT_VERSION}/go
     GOLDFLAGS="-w -s"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.GitCommit=${GIT_COMMIT}${GIT_DIRTY}"
     GOLDFLAGS="${GOLDFLAGS} -X ${GIT_IMPORT}.BuildDate=${GIT_DATE}"
-    for GOARCH in amd64 arm64; do
-        mkdir -p ./pkg/bin/linux_${GOARCH}
-        (set -x; CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./pkg/bin/linux_${GOARCH} -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .)
-    done
-    apk del .build-deps
+    
+    CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /usr/local/bin/vault -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .
 EOF
 
 # Stage 3: Final stage
 FROM vault
-ARG TARGETARCH
-COPY --link --from=stage2 /vault/pkg/bin/linux_${TARGETARCH}/vault /bin/vault
+COPY --link --from=stage2 /usr/local/bin/vault /bin/vault

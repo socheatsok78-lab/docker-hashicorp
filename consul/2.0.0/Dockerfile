@@ -13,7 +13,7 @@ FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder-node
 RUN apk add --no-cache bash curl git patch make go
 RUN npm install -g corepack && corepack disable && corepack enable
 
-# Stage 0: Clone the consul repository
+# Stage 0: Clone the repository
 FROM --platform=$BUILDPLATFORM builder-golang AS stage0
 ARG CONSUL_VERSION
 RUN git clone --depth=1 --branch=v${CONSUL_VERSION} --single-branch https://github.com/hashicorp/consul.git /consul
@@ -29,10 +29,9 @@ RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
     cp -a /consul/agent/uiserver /uiserver
 EOF
 
-# Stage 2: Build the consul binary
+# Stage 2: Build the binary
 FROM --platform=$BUILDPLATFORM builder-golang AS stage2
 
-# Build the consul binary
 ARG TARGETARCH
 ARG CONSUL_VERSION
 ARG GO_VERSION
@@ -70,6 +69,6 @@ RUN --mount=type=bind,from=stage0,source=/consul,target=/consul,rw \
     CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /usr/local/bin/consul -tags "${GOTAGS}" -ldflags "${GOLDFLAGS}" .
 EOF
 
-# Final stage
+# Stage 3: Final stage
 FROM consul
 COPY --link --from=stage2 /usr/local/bin/consul /bin/consul

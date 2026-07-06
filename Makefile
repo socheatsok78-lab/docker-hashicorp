@@ -14,5 +14,5 @@ vault:
 
 # Catch-all rule to prevent Make from throwing errors 
 # if the second value is treated as a literal target
-%:
+print build:
 	@:

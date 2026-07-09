@@ -33,6 +33,11 @@ for file in $(git diff "origin/${GITHUB_BASE_REF}" "HEAD" --name-only); do
 	github.log "- ${file}"
 	if [[ "${file}" == *"/docker-bake.hcl" ]]; then
 		target=$(echo "${file}" | cut -d'/' -f1)
+		# Check if the file exists in the repository (it might have been deleted)
+		if [ ! -f "${file}" ]; then
+			echo "The file ${file} for target ${target} does not exist (it might have been deleted), skipping."
+			continue
+		fi
 		github.log "- Detected change in docker-bake.hcl for target ${target}. This indicates a change in the base image for that target, which may affect all versions of that target. Adding all versions of ${target} to the build matrix."
 		BASE_IMAGE_CHANGES+=" ${target}"
 		QUIET_LOGS=1 BUILD_MATRIX_MANIFEST=${BUILD_MATRIX_MANIFEST} "$(dirname "$0")"/generate-build-matrix.sh "${target}"
@@ -42,6 +47,11 @@ for file in $(git diff "origin/${GITHUB_BASE_REF}" "HEAD" --name-only); do
 		# Extract target and version from the file path
 		target=$(echo "${file}" | cut -d'/' -f1)
 		version=$(echo "${file}" | cut -d'/' -f2)
+		# Check if the file exists in the repository (it might have been deleted)
+		if [ ! -f "${file}" ]; then
+			echo "The file ${file} for target ${target} does not exist (it might have been deleted), skipping."
+			continue
+		fi
 		# If the target is already marked for build due to a base image change,
 		# we can skip adding specific version changes for that target, as they will be included in the build matrix due to the base image change.
 		if [[ "${BASE_IMAGE_CHANGES}" == *"${target}"* ]]; then

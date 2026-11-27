@@ -3,7 +3,7 @@ ARG GO_VERSION=1.26.8
 ARG NODE_VERSION=20
 
 ARG GO_DISCOVER_REPO=github.com/socheatsok78-lab/go-discover
-ARG GO_DISCOVER_VERSION=go-netaddrs-v1.2.0
+ARG GO_DISCOVER_VERSION=go-netaddrs-v1.3.0
 ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder-golang

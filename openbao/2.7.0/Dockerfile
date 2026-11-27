@@ -26,7 +26,7 @@ RUN --mount=type=bind,from=stage0,source=/vault,target=/vault,rw \
 <<EOF
     set -ex
     make ember-dist
-    cp -a /vault/http/web_ui/ /web_ui
+    cp -a /vault/internal/http/web_ui/ /web_ui
 EOF
 
 # Stage 2: Build the Vault binary
@@ -41,7 +41,7 @@ ARG GO_DISCOVER_VERSION
 ARG GITHUB_REPOSITORY_OWNER
 WORKDIR /vault
 RUN --mount=type=bind,from=stage0,source=/vault,target=/vault,rw \
-    --mount=type=bind,from=stage1,source=/web_ui,target=/vault/http/web_ui \
+    --mount=type=bind,from=stage1,source=/web_ui,target=/vault/internal/http/web_ui \
     --mount=type=cache,sharing=locked,id=go-${GO_VERSION}/go/pkg/mod,target=/go/pkg/mod \
     --mount=type=tmpfs,target=/root/.cache/go-build \
 <<EOF

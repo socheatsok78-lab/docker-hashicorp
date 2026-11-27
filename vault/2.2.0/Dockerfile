@@ -9,8 +9,10 @@ ARG GITHUB_REPOSITORY_OWNER=socheatsok78-lab
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder-golang
 RUN apk add --no-cache bash curl git patch
 
-FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder-node
-RUN apk add --no-cache bash curl git patch make go
+# Vault 2.2+ pins its Node runtime via devEngines.runtime (onFail: download); pnpm fetches the
+# glibc build of Node, which cannot run on Alpine/musl, so the UI is built on Debian instead.
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-bookworm-slim AS builder-node
+RUN apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git patch make golang-go && rm -rf /var/lib/apt/lists/*
 RUN npm install -g corepack && corepack disable && corepack enable
 
 # Stage 0: Clone the repository
